@@ -2,6 +2,7 @@ package io.security.basicsecurity.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -27,60 +28,25 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private final UserDetailsService userDetailsService;
 
     @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.inMemoryAuthentication().withUser("user").password("{noop}1111").roles("USER");
+        auth.inMemoryAuthentication().withUser("sys").password("{noop}1111").roles("SYS");
+        auth.inMemoryAuthentication().withUser("admin").password("{noop}1111").roles("ADMIN");
+    }
+
+    @Override
     protected void configure(HttpSecurity http) throws Exception {
 
 
         http
-                .authorizeHttpRequests()
-                .anyRequest().authenticated();
+                .authorizeRequests()
+                        .antMatchers("/user").hasRole("USER")
+                        .antMatchers("/admin/pay").hasRole("ADMIN")
+                        .antMatchers("/admin/**").access("hasRole('USER') or hasRole('SYS')")
+                        .anyRequest().authenticated();
 
         http
                 .formLogin();
-//
-//        http
-//                .logout()
-//                .logoutUrl("/logout")
-//                .logoutSuccessUrl("/login")
-//                .addLogoutHandler(new LogoutHandler() {
-//                    @Override
-//                    public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
-//                        HttpSession session = request.getSession();
-//                        session.invalidate();
-//                    }
-//                })
-//                .logoutSuccessHandler(new LogoutSuccessHandler() {
-//                    @Override
-//                    public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-//                        response.sendRedirect("/login");
-//                    }
-//                })
-//                .deleteCookies("remember-me");
-//        http
-//                .formLogin()
-//                .loginPage("/loginPage")
-//                .defaultSuccessUrl("/")
-//                .failureUrl("/login")
-//                .usernameParameter("userId")
-//                .usernameParameter("passwd")
-//                .loginProcessingUrl("/login_proc")
-//                .successHandler(new AuthenticationSuccessHandler() {
-//                    @Override
-//                    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-//                        System.out.println("authentication "+ authentication.getName());
-//                        response.sendRedirect("/");
-//                    }
-//                })
-//                .failureHandler(new AuthenticationFailureHandler() {
-//                    @Override
-//                    public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
-//                        System.out.println("exception "+exception.getMessage());
-//                        response.sendRedirect("/login");
-//                    }
-//                })
-//                .permitAll();
 
-        http
-                .rememberMe()
-                .userDetailsService(userDetailsService);
     }
 }
